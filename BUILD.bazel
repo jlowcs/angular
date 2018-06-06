@@ -5,6 +5,7 @@ load("@build_bazel_rules_nodejs//:defs.bzl", "node_modules_filegroup")
 exports_files([
     "tsconfig.json",
     "LICENSE",
+    "protractor-perf.conf.js",
 ])
 
 # Developers should always run `bazel run :install`
@@ -19,7 +20,6 @@ node_modules_filegroup(
     packages = [
         "bytebuffer",
         "hammerjs",
-        "http-server",
         "jasmine",
         "minimist",
         "protobufjs",
@@ -35,6 +35,9 @@ node_modules_filegroup(
         "@angular-devkit/schematics",
         "@types",
         "@webcomponents/custom-elements",
+    ],
+    patterns = [
+        "node_modules/protractor/**",
     ],
 )
 
@@ -58,14 +61,4 @@ filegroup(
         "//:node_modules/angular-mocks/angular-mocks.js",
         "//:node_modules/angular/angular.js",
     ],
-)
-
-# We have to copy protractor-perf.conf.js otherwise node will follow symlinks
-# and incorrectly resolve require statements.
-# https://github.com/bazelbuild/rules_typescript/issues/154
-genrule(
-    name = "copy-protractor-perf.conf",
-    srcs = ["protractor-perf.conf.js"],
-    outs = ["copy-protractor-perf.conf.js"],
-    cmd = "cp $< $@",
 )

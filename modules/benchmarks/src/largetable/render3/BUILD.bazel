@@ -1,8 +1,8 @@
 package(default_visibility = ["//visibility:public"])
 
 load("//tools:defaults.bzl", "ts_library")
-load("//tools/protractor_test:index.bzl", "protractor_test")
 load("//packages/bazel/src:ng_rollup_bundle.bzl", "ng_rollup_bundle")
+load("//packages/bazel:index.bzl", "protractor_web_test")
 load("@build_bazel_rules_typescript//:defs.bzl", "ts_devserver")
 
 ts_library(
@@ -11,6 +11,7 @@ ts_library(
         [
             "**/*.ts",
         ],
+        exclude = ["protractor.on-prepare.ts"],
     ),
     deps = [
         "//modules/benchmarks/src:util_lib",
@@ -19,6 +20,14 @@ ts_library(
         "//packages/core",
         "@rxjs",
     ],
+)
+
+ts_library(
+    name = "ts_on_prepare",
+    testonly = True,
+    srcs = ["protractor.on-prepare.ts"],
+    tsconfig = ":tsconfig.json",
+    deps = ["//packages/bazel/src/protractor/utils"],
 )
 
 ng_rollup_bundle(
@@ -37,7 +46,7 @@ genrule(
 )
 
 ts_devserver(
-    name = "prodserver",
+    name = "devserver",
     static_files = [
         ":bundle.min_debug.js",
         ":bundle.min.js",
@@ -46,10 +55,15 @@ ts_devserver(
     ],
 )
 
-protractor_test(
+protractor_web_test(
     name = "perf",
-    configuration = "//:copy-protractor-perf.conf",
-    server = ":prodserver",
+    configuration = "//:protractor-perf.conf.js",
+    data = [
+        "//packages/bazel/src/protractor/utils",
+        "//packages/benchpress",
+    ],
+    on_prepare = ":ts_on_prepare",
+    server = ":devserver",
     tags = ["manual"],
     deps = [
         "//modules/benchmarks/src/largetable:perf_lib",
